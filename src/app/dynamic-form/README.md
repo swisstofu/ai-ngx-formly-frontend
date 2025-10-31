@@ -1,16 +1,16 @@
 # Dynamic Form with JSON Logic and Validation
 
-This component loads form configuration from a JSON file and uses JSON Logic to control field visibility, required validation, disabled states, and custom validation rules.
+This component loads form configuration from a backend API and uses JSON Logic to control field visibility, required validation, disabled states, and custom validation rules.
 
 ## How It Works
 
-### 1. Configuration File
-The form configuration is stored in `form-config.json`. This file contains:
-- Field definitions (type, key, props)
-- JSON Logic expressions for dynamic behavior
+### 1. Configuration Source
+The form configuration is fetched from the backend API via `FormApiService`:
+- Endpoint: `http://localhost:8080/api/forms/config`
+- Returns field definitions (type, key, props) and JSON Logic expressions for dynamic behavior
 
 ### 2. Loading Process
-1. Component loads `form-config.json` via HttpClient on initialization
+1. Component calls `FormApiService.getFormConfig()` on initialization
 2. The `processFieldsWithJsonLogic()` method converts JSON Logic expressions to Formly expression functions
 3. Formly renders the form with dynamic behavior
 
@@ -75,13 +75,13 @@ Common operators used in the configuration:
 
 ## Modifying the Form
 
-To modify the form, edit `src/app/dynamic-form/form-config.json`:
+To modify the form, update the backend API response at `http://localhost:8080/api/forms/config`:
 
-1. **Add a new field**: Add a new object to the `fields` array
+1. **Add a new field**: Add a new object to the `fields` array in the API response
 2. **Add conditional logic**: Add an `expressions` object with JSON Logic rules
 3. **Change field properties**: Modify the `props` object
 
-The changes will be picked up automatically when you refresh the browser (hot reload).
+The changes will be picked up automatically when you refresh the browser (the component fetches fresh configuration on load).
 
 ## Example: Adding a New Field
 
@@ -232,8 +232,19 @@ Error messages are displayed:
 
 ## Files
 
-- `form-config.json` - Form configuration with JSON Logic rules and validators
 - `dynamic-form.component.ts` - Component that loads and processes the configuration
 - `dynamic-form.component.html` - Template for rendering the form
 - `dynamic-form.component.css` - Styles for the form including error styling
+- `validators.ts` - Custom validators for form fields
+
+## API Integration
+
+The component uses `FormApiService` to communicate with the backend:
+
+- **Service**: `src/app/services/form-api.service.ts`
+- **Methods**:
+  - `getFormConfig()`: Fetches form configuration from `/api/forms/config`
+  - `submitForm(formData)`: Submits form data to `/api/forms/submit`
+
+The service handles all HTTP communication, making the component cleaner and more testable.
 

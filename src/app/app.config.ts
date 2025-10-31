@@ -11,7 +11,6 @@ import { FormlyFieldCheckbox } from '@ngx-formly/primeng/checkbox';
 import { FormlyFieldSelect } from '@ngx-formly/primeng/select';
 
 import { routes } from './app.routes';
-import { ValidatorRegistryService } from './services/validator-registry.service';
 import { FormlyConfigService } from './services/formly-config.service';
 
 export const appConfig: ApplicationConfig = {
@@ -26,7 +25,6 @@ export const appConfig: ApplicationConfig = {
         preset: Aura
       }
     }),
-    ValidatorRegistryService,
     FormlyConfigService,
     provideFormlyCore({
       types: [

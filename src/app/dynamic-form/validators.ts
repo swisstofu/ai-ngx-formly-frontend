@@ -9,7 +9,7 @@ export function emailValidator(control: AbstractControl): ValidationErrors | nul
   if (!control.value) {
     return null; // Don't validate empty values (use 'required' for that)
   }
-  
+
   const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
   return emailRegex.test(control.value) ? null : { email: true };
 }
@@ -30,10 +30,10 @@ export function minLengthValidatorFactory(minLength: number): ValidatorFn {
     if (!control.value) {
       return null;
     }
-    
+
     const value = control.value.toString();
-    return value.length >= minLength 
-      ? null 
+    return value.length >= minLength
+      ? null
       : { minLength: { requiredLength: minLength, actualLength: value.length } };
   };
 }
@@ -54,10 +54,10 @@ export function maxLengthValidatorFactory(maxLength: number): ValidatorFn {
     if (!control.value) {
       return null;
     }
-    
+
     const value = control.value.toString();
-    return value.length <= maxLength 
-      ? null 
+    return value.length <= maxLength
+      ? null
       : { maxLength: { requiredLength: maxLength, actualLength: value.length } };
   };
 }
@@ -78,10 +78,10 @@ export function minValidatorFactory(min: number): ValidatorFn {
     if (!control.value && control.value !== 0) {
       return null;
     }
-    
+
     const numValue = Number(control.value);
-    return !isNaN(numValue) && numValue >= min 
-      ? null 
+    return !isNaN(numValue) && numValue >= min
+      ? null
       : { min: { min: min, actual: numValue } };
   };
 }
@@ -102,10 +102,10 @@ export function maxValidatorFactory(max: number): ValidatorFn {
     if (!control.value && control.value !== 0) {
       return null;
     }
-    
+
     const numValue = Number(control.value);
-    return !isNaN(numValue) && numValue <= max 
-      ? null 
+    return !isNaN(numValue) && numValue <= max
+      ? null
       : { max: { max: max, actual: numValue } };
   };
 }
@@ -126,10 +126,10 @@ export function patternValidatorFactory(pattern: string | RegExp): ValidatorFn {
     if (!control.value) {
       return null;
     }
-    
+
     const regex = typeof pattern === 'string' ? new RegExp(pattern) : pattern;
-    return regex.test(control.value.toString()) 
-      ? null 
+    return regex.test(control.value.toString())
+      ? null
       : { pattern: { requiredPattern: pattern.toString(), actualValue: control.value } };
   };
 }
@@ -148,8 +148,8 @@ export function nameValidator(control: AbstractControl): ValidationErrors | null
   if (!control.value) {
     return null;
   }
-  
-  const nameRegex = /^[a-zA-ZÀ-ÿ\s'-]+$/;
+
+  const nameRegex = /^[a-zA-ZÀ-ÿ\s'\-]+$/;
   return nameRegex.test(control.value) ? null : { name: true };
 }
 
@@ -167,7 +167,7 @@ export function licenseNumberValidator(control: AbstractControl): ValidationErro
   if (!control.value) {
     return null;
   }
-  
+
   const licenseRegex = /^[A-Z0-9]{6,12}$/;
   return licenseRegex.test(control.value) ? null : { licenseNumber: true };
 }

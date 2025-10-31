@@ -1,6 +1,6 @@
 import { TestBed } from '@angular/core/testing';
 import { provideHttpClient } from '@angular/common/http';
-import { App } from './app';
+import { App } from '../../src/app/app';
 
 describe('App', () => {
   beforeEach(async () => {

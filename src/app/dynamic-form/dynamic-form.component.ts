@@ -3,13 +3,13 @@ import { CommonModule } from '@angular/common';
 import { ReactiveFormsModule, FormGroup } from '@angular/forms';
 import { FormlyModule, FormlyFieldConfig } from '@ngx-formly/core';
 import { FormlyPrimeNGModule } from '@ngx-formly/primeng';
-import { HttpClient } from '@angular/common/http';
 import * as jsonLogic from 'json-logic-js';
 import { CardModule } from 'primeng/card';
 import { ButtonModule } from 'primeng/button';
 import { MessageModule } from 'primeng/message';
 import { ToastModule } from 'primeng/toast';
 import { MessageService } from 'primeng/api';
+import { FormApiService } from '../services/form-api.service';
 
 @Component({
   selector: 'app-dynamic-form',
@@ -43,21 +43,25 @@ export class DynamicFormComponent implements OnInit {
     },
   };
 
-  private readonly API_URL = 'http://localhost:8080/api/forms/submit';
-
   constructor(
-    private http: HttpClient,
+    private formApiService: FormApiService,
     private messageService: MessageService
   ) {}
 
   ngOnInit() {
-    // Load form configuration from JSON file
-    this.http.get<{ fields: any[] }>('app/dynamic-form/form-config.json').subscribe({
+    // Load form configuration from backend API
+    this.formApiService.getFormConfig().subscribe({
       next: (config) => {
         this.fields = this.processFieldsWithJsonLogic(config.fields);
       },
       error: (error) => {
         console.error('Error loading form configuration:', error);
+        this.messageService.add({
+          severity: 'error',
+          summary: 'Configuration Error',
+          detail: 'Failed to load form configuration. Please try again later.',
+          life: 5000
+        });
       }
     });
   }
@@ -70,14 +74,14 @@ export class DynamicFormComponent implements OnInit {
 
       // Process expressions (visibility, required, disabled)
       if (field.expressions) {
-        processedField.expressions = {};
+        const expressions: any = {};
 
         Object.keys(field.expressions).forEach((key) => {
           const expression = field.expressions[key];
 
           if (expression.jsonLogic) {
             // Convert JSON Logic to Formly expression function
-            processedField.expressions![key] = (field: FormlyFieldConfig) => {
+            expressions[key] = (field: FormlyFieldConfig) => {
               try {
                 const result: FormlyFieldConfig[] = jsonLogic.apply(expression.jsonLogic, {
                   model: field.model,
@@ -91,6 +95,14 @@ export class DynamicFormComponent implements OnInit {
             };
           }
         });
+
+        // Only set expressions if we actually have any
+        if (Object.keys(expressions).length > 0) {
+          processedField.expressions = expressions;
+        } else {
+          // Remove empty expressions object
+          delete processedField.expressions;
+        }
       }
 
       return processedField;
@@ -107,7 +119,7 @@ export class DynamicFormComponent implements OnInit {
       console.log('Form submitted with values:', this.model);
 
       // Submit to backend API
-      this.http.post<any>(this.API_URL, this.model).subscribe({
+      this.formApiService.submitForm(this.model).subscribe({
         next: (response) => {
           console.log('Backend response:', response);
           this.messageService.add({

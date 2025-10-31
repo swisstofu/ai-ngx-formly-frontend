@@ -18,7 +18,7 @@ import {
   minValidatorFactory,
   maxValidatorFactory,
   patternValidatorFactory
-} from './validators';
+} from '../../src/app/dynamic-form/validators';
 
 describe('Validators', () => {
   describe('emailValidator', () => {

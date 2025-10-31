@@ -1,16 +1,16 @@
-import {Component, OnInit} from '@angular/core';
-import {CommonModule} from '@angular/common';
-import {FormGroup, ReactiveFormsModule} from '@angular/forms';
-import {FormlyFieldConfig, FormlyModule} from '@ngx-formly/core';
-import {FormlyPrimeNGModule} from '@ngx-formly/primeng';
+import { Component, OnInit } from '@angular/core';
+import { CommonModule } from '@angular/common';
+import { ReactiveFormsModule, FormGroup } from '@angular/forms';
+import { FormlyModule, FormlyFieldConfig } from '@ngx-formly/core';
+import { FormlyPrimeNGModule } from '@ngx-formly/primeng';
 import * as jsonLogic from 'json-logic-js';
-import {CardModule} from 'primeng/card';
-import {ButtonModule} from 'primeng/button';
-import {MessageModule} from 'primeng/message';
-import {ToastModule} from 'primeng/toast';
-import {MessageService} from 'primeng/api';
-import {FormApiService} from '../services/form-api.service';
-import {FormlyConfigService} from '../services/formly-config.service';
+import { CardModule } from 'primeng/card';
+import { ButtonModule } from 'primeng/button';
+import { MessageModule } from 'primeng/message';
+import { ToastModule } from 'primeng/toast';
+import { MessageService } from 'primeng/api';
+import { FormApiService } from '../services/form-api.service';
+import { FormlyConfigService } from '../services/formly-config.service';
 
 @Component({
   selector: 'app-dynamic-form',
@@ -35,7 +35,6 @@ export class DynamicFormComponent implements OnInit {
   fields: FormlyFieldConfig[] = [];
   formSubmitted = false;
   isSubmitting = false;
-  configName: string = 'form-config'; // Track the config name for submission
   options: any = {
     formState: {
       showErrorState: true,
@@ -49,13 +48,11 @@ export class DynamicFormComponent implements OnInit {
     private formApiService: FormApiService,
     private messageService: MessageService,
     private formlyConfigService: FormlyConfigService
-  ) {
-  }
+  ) {}
 
   ngOnInit() {
     // Load form configuration from backend API
-    // You can change 'default' to load different form configurations
-    this.formApiService.getFormConfig(this.configName).subscribe({
+    this.formApiService.getFormConfig().subscribe({
       next: (config) => {
         // Register validation messages from server if provided
         if (config.validationMessages && Object.keys(config.validationMessages).length > 0) {
@@ -79,9 +76,59 @@ export class DynamicFormComponent implements OnInit {
     });
   }
 
+  private processFieldsWithJsonLogic(
+    fields: any[]
+  ): FormlyFieldConfig[] {
+    return fields.map((field) => {
+      const processedField: FormlyFieldConfig = { ...field };
+      // Normalize HTML pattern in props if provided by server to avoid invalid charclass (eg, trailing hyphen)
+      if ((processedField as any).props && typeof (processedField as any).props.pattern === 'string') {
+        (processedField as any).props.pattern = this.formlyConfigService.normalizeRegexPattern(
+          (processedField as any).props.pattern
+        );
+      }
+
+
+      // Process expressions (visibility, required, disabled)
+      if (field.expressions) {
+        const expressions: any = {};
+
+        Object.keys(field.expressions).forEach((key) => {
+          const expression = field.expressions[key];
+
+          if (expression.jsonLogic) {
+            // Convert JSON Logic to Formly expression function
+            expressions[key] = (field: FormlyFieldConfig) => {
+              try {
+                const result: FormlyFieldConfig[] = jsonLogic.apply(expression.jsonLogic, {
+                  model: field.model,
+                  formState: field.options?.formState,
+                });
+                return result;
+              } catch (error) {
+                console.error('Error evaluating JSON Logic:', error);
+                return false;
+              }
+            };
+          }
+        });
+
+        // Only set expressions if we actually have any
+        if (Object.keys(expressions).length > 0) {
+          processedField.expressions = expressions;
+        } else {
+          // Remove empty expressions object
+          delete processedField.expressions;
+        }
+      }
+
+      return processedField;
+    });
+  }
+
   onSubmit() {
     this.formSubmitted = true;
-    this.options.parentForm = {submitted: true};
+    this.options.parentForm = { submitted: true };
     this.markFormGroupTouched(this.form);
 
     if (this.form.valid) {
@@ -89,7 +136,7 @@ export class DynamicFormComponent implements OnInit {
       console.log('Form submitted with values:', this.model);
 
       // Submit to backend API
-      this.formApiService.submitForm(this.configName, this.model).subscribe({
+      this.formApiService.submitForm(this.model).subscribe({
         next: (response) => {
           console.log('Backend response:', response);
           this.messageService.add({
@@ -147,56 +194,7 @@ export class DynamicFormComponent implements OnInit {
     this.model = {};
     this.form.reset();
     this.formSubmitted = false;
-    this.options.parentForm = {submitted: false};
-  }
-
-  private processFieldsWithJsonLogic(
-    fields: any[]
-  ): FormlyFieldConfig[] {
-    return fields.map((field) => {
-      const processedField: FormlyFieldConfig = {...field};
-      // Normalize HTML pattern in props if provided by server to avoid invalid charclass (eg, trailing hyphen)
-      if ((processedField as any).props && typeof (processedField as any).props.pattern === 'string') {
-        (processedField as any).props.pattern = this.formlyConfigService.normalizeRegexPattern(
-          (processedField as any).props.pattern
-        );
-      }
-
-      // Process expressions (visibility, required, disabled)
-      if (field.expressions) {
-        const expressions: any = {};
-
-        Object.keys(field.expressions).forEach((key) => {
-          const expression = field.expressions[key];
-
-          if (expression.jsonLogic) {
-            // Convert JSON Logic to Formly expression function
-            expressions[key] = (field: FormlyFieldConfig) => {
-              try {
-                const result: FormlyFieldConfig[] = jsonLogic.apply(expression.jsonLogic, {
-                  model: field.model,
-                  formState: field.options?.formState,
-                });
-                return result;
-              } catch (error) {
-                console.error('Error evaluating JSON Logic:', error);
-                return false;
-              }
-            };
-          }
-        });
-
-        // Only set expressions if we actually have any
-        if (Object.keys(expressions).length > 0) {
-          processedField.expressions = expressions;
-        } else {
-          // Remove empty expressions object
-          delete processedField.expressions;
-        }
-      }
-
-      return processedField;
-    });
+    this.options.parentForm = { submitted: false };
   }
 
   private markFormGroupTouched(formGroup: FormGroup) {

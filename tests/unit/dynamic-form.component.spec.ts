@@ -1,11 +1,11 @@
-import {ComponentFixture, TestBed} from '@angular/core/testing';
-import {FormGroup, ReactiveFormsModule} from '@angular/forms';
-import {FormlyFieldConfig, FormlyModule} from '@ngx-formly/core';
-import {FormlyPrimeNGModule} from '@ngx-formly/primeng';
-import {of, throwError} from 'rxjs';
-import {DynamicFormComponent} from '../../src/app/dynamic-form/dynamic-form.component';
-import {FormApiService} from '../../src/app/services/form-api.service';
-import {FormlyConfigService} from '../../src/app/services/formly-config.service';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { ReactiveFormsModule, FormGroup } from '@angular/forms';
+import { FormlyModule, FormlyFieldConfig } from '@ngx-formly/core';
+import { FormlyPrimeNGModule } from '@ngx-formly/primeng';
+import { of, throwError } from 'rxjs';
+import { DynamicFormComponent } from '../../src/app/dynamic-form/dynamic-form.component';
+import { FormApiService } from '../../src/app/services/form-api.service';
+import { FormlyConfigService } from '../../src/app/services/formly-config.service';
 
 describe('DynamicFormComponent', () => {
   let component: DynamicFormComponent;
@@ -42,7 +42,7 @@ describe('DynamicFormComponent', () => {
         expressions: {
           'props.required': {
             jsonLogic: {
-              '===': [{var: 'model.country'}, 'us']
+              '===': [{ var: 'model.country' }, 'us']
             }
           }
         }
@@ -56,16 +56,27 @@ describe('DynamicFormComponent', () => {
         expressions: {
           hide: {
             jsonLogic: {
-              '<': [{var: 'model.age'}, 16]
+              '<': [{ var: 'model.age' }, 16]
             }
           }
         }
       }
     ],
+<<<<<<< HEAD
     validationMessages: {
       required: 'This field is required',
       email: 'Please enter a valid email address'
     }
+=======
+    validators: [
+      { name: 'email', type: 'builtin' },
+      { name: 'name', type: 'builtin' }
+    ],
+    validationMessages: [
+      { name: 'required', message: 'This field is required' },
+      { name: 'email', message: 'Please enter a valid email address' }
+    ]
+>>>>>>> main
   };
 
   beforeEach(async () => {
@@ -75,6 +86,10 @@ describe('DynamicFormComponent', () => {
     };
 
     const mockFormlyConfigService = {
+<<<<<<< HEAD
+=======
+      registerValidators: jest.fn(),
+>>>>>>> main
       registerValidationMessages: jest.fn(),
       registerDefaultValidationMessages: jest.fn()
     };
@@ -87,8 +102,8 @@ describe('DynamicFormComponent', () => {
         FormlyPrimeNGModule
       ],
       providers: [
-        {provide: FormApiService, useValue: mockFormApiService},
-        {provide: FormlyConfigService, useValue: mockFormlyConfigService}
+        { provide: FormApiService, useValue: mockFormApiService },
+        { provide: FormlyConfigService, useValue: mockFormlyConfigService }
       ]
     }).compileComponents();
 
@@ -113,23 +128,13 @@ describe('DynamicFormComponent', () => {
 
     fixture.detectChanges();
 
-    expect(formApiService.getFormConfig).toHaveBeenCalledWith('form-config');
+    expect(formApiService.getFormConfig).toHaveBeenCalled();
     expect(component.fields.length).toBe(4);
     expect(component.fields[0].key).toBe('firstName');
   });
 
-  it('should load form configuration with custom configName', () => {
-    formApiService.getFormConfig.mockReturnValue(of(mockFormConfig));
-    component.configName = 'registration';
-
-    fixture.detectChanges();
-
-    expect(formApiService.getFormConfig).toHaveBeenCalledWith('registration');
-  });
-
   it('should handle HTTP error when loading config', () => {
-    jest.spyOn(console, 'error').mockImplementation(() => {
-    });
+    jest.spyOn(console, 'error').mockImplementation(() => {});
     formApiService.getFormConfig.mockReturnValue(throwError(() => new Error('API Error')));
 
     fixture.detectChanges();
@@ -167,7 +172,7 @@ describe('DynamicFormComponent', () => {
       // Test with age < 16 (should hide)
       let mockField: FormlyFieldConfig = {
         ...field!,
-        model: {age: 15},
+        model: { age: 15 },
         options: component.options
       };
       const hideExpr = field?.expressions?.hide;
@@ -176,7 +181,7 @@ describe('DynamicFormComponent', () => {
         expect(hideResult).toBe(true);
 
         // Test with age >= 16 (should not hide)
-        mockField = {...mockField, model: {age: 18}};
+        mockField = { ...mockField, model: { age: 18 } };
         const showResult = hideExpr(mockField);
         expect(showResult).toBe(false);
       }
@@ -189,7 +194,7 @@ describe('DynamicFormComponent', () => {
       // Test with country = 'us' (should be required)
       let mockField: FormlyFieldConfig = {
         ...field!,
-        model: {country: 'us'},
+        model: { country: 'us' },
         options: component.options
       };
       const requiredExpr = field?.expressions?.['props.required'];
@@ -198,15 +203,14 @@ describe('DynamicFormComponent', () => {
         expect(requiredResult).toBe(true);
 
         // Test with country != 'us' (should not be required)
-        mockField = {...mockField, model: {country: 'ca'}};
+        mockField = { ...mockField, model: { country: 'ca' } };
         const notRequiredResult = requiredExpr(mockField);
         expect(notRequiredResult).toBe(false);
       }
     });
 
     it('should handle JSON Logic errors gracefully', () => {
-      jest.spyOn(console, 'error').mockImplementation(() => {
-      });
+      jest.spyOn(console, 'error').mockImplementation(() => {});
 
       const fieldWithBadLogic = {
         key: 'test',
@@ -214,7 +218,7 @@ describe('DynamicFormComponent', () => {
         expressions: {
           hide: {
             jsonLogic: {
-              invalidOperator: [{var: 'model.test'}]
+              invalidOperator: [{ var: 'model.test' }]
             }
           }
         }
@@ -250,7 +254,7 @@ describe('DynamicFormComponent', () => {
     });
 
     it('should mark all form controls as touched', () => {
-      component.model = {firstName: 'John'};
+      component.model = { firstName: 'John' };
       fixture.detectChanges();
 
       const firstNameControl = component.form.get('firstName');
@@ -262,9 +266,8 @@ describe('DynamicFormComponent', () => {
     });
 
     it('should submit form to backend when valid', () => {
-      jest.spyOn(console, 'log').mockImplementation(() => {
-      });
-      formApiService.submitForm.mockReturnValue(of({message: 'Form submitted successfully!'}));
+      jest.spyOn(console, 'log').mockImplementation(() => {});
+      formApiService.submitForm.mockReturnValue(of({ message: 'Form submitted successfully!' }));
 
       const submittedData = {
         firstName: 'John',
@@ -275,7 +278,7 @@ describe('DynamicFormComponent', () => {
 
       component.onSubmit();
 
-      expect(formApiService.submitForm).toHaveBeenCalledWith('form-config', submittedData);
+      expect(formApiService.submitForm).toHaveBeenCalledWith(submittedData);
       expect(component.isSubmitting).toBe(false);
       expect(component.formSubmitted).toBe(false);
       expect(component.model).toEqual({});
@@ -292,8 +295,7 @@ describe('DynamicFormComponent', () => {
     });
 
     it('should log form errors when invalid', () => {
-      jest.spyOn(console, 'log').mockImplementation(() => {
-      });
+      jest.spyOn(console, 'log').mockImplementation(() => {});
 
       component.model = {};
       fixture.detectChanges();
@@ -312,13 +314,13 @@ describe('DynamicFormComponent', () => {
     });
 
     it('should reset model to empty object', () => {
-      component.model = {firstName: 'John', email: 'john@example.com'};
+      component.model = { firstName: 'John', email: 'john@example.com' };
       component.resetForm();
       expect(component.model).toEqual({});
     });
 
     it('should reset form controls', () => {
-      component.model = {firstName: 'John'};
+      component.model = { firstName: 'John' };
       fixture.detectChanges();
 
       const firstNameControl = component.form.get('firstName');

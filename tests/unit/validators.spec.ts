@@ -1,192 +1,70 @@
-import { FormControl } from '@angular/forms';
-import { FormlyFieldConfig, FormlyConfig } from '@ngx-formly/core';
+import { FormControl, ValidationErrors } from '@angular/forms';
+import { FormlyConfig } from '@ngx-formly/core';
 import { FormlyConfigService } from '../../src/app/services/formly-config.service';
 
-describe('Validators', () => {
+describe('FormlyConfigService', () => {
   let formlyConfigService: FormlyConfigService;
-  let mockFormlyConfig: Partial<FormlyConfig>;
+  let mockFormlyConfig: jest.Mocked<Partial<FormlyConfig>>;
 
   beforeEach(() => {
     mockFormlyConfig = {
-      addValidator: jest.fn(),
-      addValidationMessage: jest.fn()
+      addValidatorMessage: jest.fn()
     };
     formlyConfigService = new FormlyConfigService(mockFormlyConfig as FormlyConfig);
   });
 
+  describe('registerValidationMessages', () => {
+    it('should register validation messages', () => {
+      const messages: Record<string, string> = {
+        required: 'This field is required',
+        email: 'Invalid email address'
+      };
 
+      formlyConfigService.registerValidationMessages(messages);
 
-  describe('minLengthValidator', () => {
-    it('should return null for empty value', () => {
-      const factory = formlyConfigService.getValidatorFactory('minLength');
-      const validator = factory?.({ minLength: 5 });
-      const control = new FormControl('');
-      expect(validator?.(control)).toBeNull();
-    });
-
-    it('should return null when value meets minimum length', () => {
-      const factory = formlyConfigService.getValidatorFactory('minLength');
-      const validator = factory?.({ minLength: 5 });
-      const control = new FormControl('12345');
-      expect(validator?.(control)).toBeNull();
-    });
-
-    it('should return null when value exceeds minimum length', () => {
-      const factory = formlyConfigService.getValidatorFactory('minLength');
-      const validator = factory?.({ minLength: 5 });
-      const control = new FormControl('123456');
-      expect(validator?.(control)).toBeNull();
-    });
-
-    it('should return error when value is below minimum length', () => {
-      const factory = formlyConfigService.getValidatorFactory('minLength');
-      const validator = factory?.({ minLength: 5 });
-      const control = new FormControl('1234');
-      expect(validator?.(control)).toEqual({
-        minLength: { requiredLength: 5, actualLength: 4 }
-      });
+      expect(mockFormlyConfig.addValidatorMessage).toHaveBeenCalledTimes(2);
+      expect(mockFormlyConfig.addValidatorMessage).toHaveBeenCalledWith('required', 'This field is required');
+      expect(mockFormlyConfig.addValidatorMessage).toHaveBeenCalledWith('email', 'Invalid email address');
     });
   });
 
-  describe('maxLengthValidator', () => {
-    it('should return null for empty value', () => {
-      const factory = formlyConfigService.getValidatorFactory('maxLength');
-      const validator = factory?.({ maxLength: 10 });
-      const control = new FormControl('');
-      expect(validator?.(control)).toBeNull();
-    });
+  describe('registerDefaultValidationMessages', () => {
+    it('should register default validation messages in French', () => {
+      formlyConfigService.registerDefaultValidationMessages();
 
-    it('should return null when value is within maximum length', () => {
-      const factory = formlyConfigService.getValidatorFactory('maxLength');
-      const validator = factory?.({ maxLength: 10 });
-      const control = new FormControl('12345');
-      expect(validator?.(control)).toBeNull();
-    });
-
-    it('should return null when value equals maximum length', () => {
-      const factory = formlyConfigService.getValidatorFactory('maxLength');
-      const validator = factory?.({ maxLength: 10 });
-      const control = new FormControl('1234567890');
-      expect(validator?.(control)).toBeNull();
-    });
-
-    it('should return error when value exceeds maximum length', () => {
-      const factory = formlyConfigService.getValidatorFactory('maxLength');
-      const validator = factory?.({ maxLength: 10 });
-      const control = new FormControl('12345678901');
-      expect(validator?.(control)).toEqual({
-        maxLength: { requiredLength: 10, actualLength: 11 }
-      });
+      expect(mockFormlyConfig.addValidatorMessage).toHaveBeenCalledTimes(6);
+      expect(mockFormlyConfig.addValidatorMessage).toHaveBeenCalledWith('required', 'Ce champ est requis');
+      expect(mockFormlyConfig.addValidatorMessage).toHaveBeenCalledWith('minLength', 'Longueur minimale non atteinte');
+      expect(mockFormlyConfig.addValidatorMessage).toHaveBeenCalledWith('maxLength', 'Longueur maximale dépassée');
+      expect(mockFormlyConfig.addValidatorMessage).toHaveBeenCalledWith('min', 'La valeur est trop petite');
+      expect(mockFormlyConfig.addValidatorMessage).toHaveBeenCalledWith('max', 'La valeur est trop grande');
+      expect(mockFormlyConfig.addValidatorMessage).toHaveBeenCalledWith('pattern', 'Format invalide');
     });
   });
 
-  describe('minValidator', () => {
-    it('should return null for empty value', () => {
-      const factory = formlyConfigService.getValidatorFactory('min');
-      const validator = factory?.({ min: 18 });
-      const control = new FormControl('');
-      expect(validator?.(control)).toBeNull();
+  describe('normalizeRegexPattern', () => {
+    it('should escape trailing hyphens in character classes', () => {
+      const pattern = "[a-z'-]";
+      const normalized = formlyConfigService.normalizeRegexPattern(pattern);
+      expect(normalized).toBe("[a-z'\\-]");
     });
 
-    it('should return null for value of 0 when min is 0', () => {
-      const factory = formlyConfigService.getValidatorFactory('min');
-      const validator = factory?.({ min: 0 });
-      const control = new FormControl(0);
-      expect(validator?.(control)).toBeNull();
+    it('should not affect valid ranges', () => {
+      const pattern = "[a-z]";
+      const normalized = formlyConfigService.normalizeRegexPattern(pattern);
+      expect(normalized).toBe("[a-z]");
     });
 
-    it('should return null when value meets minimum', () => {
-      const factory = formlyConfigService.getValidatorFactory('min');
-      const validator = factory?.({ min: 18 });
-      const control = new FormControl(18);
-      expect(validator?.(control)).toBeNull();
+    it('should handle multiple trailing hyphens', () => {
+      const pattern = "[a-z'-][0-9-]";
+      const normalized = formlyConfigService.normalizeRegexPattern(pattern);
+      expect(normalized).toBe("[a-z'\\-][0-9\\-]");
     });
 
-    it('should return null when value exceeds minimum', () => {
-      const factory = formlyConfigService.getValidatorFactory('min');
-      const validator = factory?.({ min: 18 });
-      const control = new FormControl(25);
-      expect(validator?.(control)).toBeNull();
-    });
-
-    it('should return error when value is below minimum', () => {
-      const factory = formlyConfigService.getValidatorFactory('min');
-      const validator = factory?.({ min: 18 });
-      const control = new FormControl(15);
-      expect(validator?.(control)).toEqual({
-        min: { min: 18, actual: 15 }
-      });
-    });
-  });
-
-  describe('maxValidator', () => {
-    it('should return null for empty value', () => {
-      const factory = formlyConfigService.getValidatorFactory('max');
-      const validator = factory?.({ max: 120 });
-      const control = new FormControl('');
-      expect(validator?.(control)).toBeNull();
-    });
-
-    it('should return null for value of 0 when max is greater', () => {
-      const factory = formlyConfigService.getValidatorFactory('max');
-      const validator = factory?.({ max: 120 });
-      const control = new FormControl(0);
-      expect(validator?.(control)).toBeNull();
-    });
-
-    it('should return null when value is below maximum', () => {
-      const factory = formlyConfigService.getValidatorFactory('max');
-      const validator = factory?.({ max: 120 });
-      const control = new FormControl(100);
-      expect(validator?.(control)).toBeNull();
-    });
-
-    it('should return null when value equals maximum', () => {
-      const factory = formlyConfigService.getValidatorFactory('max');
-      const validator = factory?.({ max: 120 });
-      const control = new FormControl(120);
-      expect(validator?.(control)).toBeNull();
-    });
-
-    it('should return error when value exceeds maximum', () => {
-      const factory = formlyConfigService.getValidatorFactory('max');
-      const validator = factory?.({ max: 120 });
-      const control = new FormControl(150);
-      expect(validator?.(control)).toEqual({
-        max: { max: 120, actual: 150 }
-      });
-    });
-  });
-
-  describe('patternValidator', () => {
-    it('should return null for empty value', () => {
-      const factory = formlyConfigService.getValidatorFactory('pattern');
-      const validator = factory?.({ pattern: /^[A-Z]+$/ });
-      const control = new FormControl('');
-      expect(validator?.(control)).toBeNull();
-    });
-
-    it('should return null when value matches pattern (RegExp)', () => {
-      const factory = formlyConfigService.getValidatorFactory('pattern');
-      const validator = factory?.({ pattern: /^[A-Z]+$/ });
-      const control = new FormControl('ABCD');
-      expect(validator?.(control)).toBeNull();
-    });
-
-    it('should return null when value matches pattern (string)', () => {
-      const factory = formlyConfigService.getValidatorFactory('pattern');
-      const validator = factory?.({ pattern: '^[A-Z]+$' });
-      const control = new FormControl('ABCD');
-      expect(validator?.(control)).toBeNull();
-    });
-
-    it('should return error when value does not match pattern', () => {
-      const factory = formlyConfigService.getValidatorFactory('pattern');
-      const validator = factory?.({ pattern: /^[A-Z]+$/ });
-      const control = new FormControl('abc123');
-      const result = validator?.(control);
-      expect(result).toBeTruthy();
-      expect(result?.['pattern']).toBeDefined();
+    it('should return original pattern on error', () => {
+      const pattern = "valid-pattern";
+      const normalized = formlyConfigService.normalizeRegexPattern(pattern);
+      expect(normalized).toBe("valid-pattern");
     });
   });
 });

@@ -62,14 +62,10 @@ describe('DynamicFormComponent', () => {
         }
       }
     ],
-    validators: [
-      { name: 'email', type: 'builtin' },
-      { name: 'name', type: 'builtin' }
-    ],
-    validationMessages: [
-      { name: 'required', message: 'This field is required' },
-      { name: 'email', message: 'Please enter a valid email address' }
-    ]
+    validationMessages: {
+      required: 'This field is required',
+      email: 'Please enter a valid email address'
+    }
   };
 
   beforeEach(async () => {
@@ -79,7 +75,6 @@ describe('DynamicFormComponent', () => {
     };
 
     const mockFormlyConfigService = {
-      registerValidators: jest.fn(),
       registerValidationMessages: jest.fn(),
       registerDefaultValidationMessages: jest.fn()
     };

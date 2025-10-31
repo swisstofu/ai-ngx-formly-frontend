@@ -189,81 +189,29 @@ The changes will be picked up automatically when you refresh the browser (the co
 
 ### Architecture
 
-The validation system uses a **fully server-driven architecture** for maximum flexibility:
+The validation system uses a **fully server-driven architecture** leveraging ngx-formly's built-in validators:
 
-1. **FormlyConfigService** (`src/app/services/formly-config.service.ts`) - Provides generic validators (pattern, minLength, maxLength, min, max) and registers server-defined validators with Formly
-2. **Backend API** - Defines all specific validators (email, name, licenseNumber, phone, etc.) and sends them to the frontend
-3. **DynamicFormComponent** - Registers validators from server on form load
+1. **ngx-formly Built-in Validators** - Provides validators (pattern, minLength, maxLength, min, max, required) that are configured via field `props`
+2. **FormlyConfigService** (`src/app/services/formly-config.service.ts`) - Manages validation messages
+3. **Backend API** - Defines field configurations with validator settings and custom validation messages
+4. **DynamicFormComponent** - Loads form configuration from server and registers validation messages
 
-**Key Benefit**: All validators are defined on the server. The frontend only provides reusable generic validators that accept configuration parameters.
+**Key Benefit**: All validation is handled by ngx-formly's built-in validators configured via field properties.
 
-### Generic Validators (Built-in)
+### Built-in Validators
 
-These validators are always available and can be configured by the server:
+ngx-formly provides the following validators that are configured via field `props`:
 
-1. **pattern** - Validates against a regex pattern
-2. **minLength** - Validates minimum string length
-3. **maxLength** - Validates maximum string length
-4. **min** - Validates minimum numeric value
-5. **max** - Validates maximum numeric value
+1. **required** - Field is required
+2. **pattern** - Validates against a regex pattern
+3. **minLength** - Validates minimum string length
+4. **maxLength** - Validates maximum string length
+5. **min** - Validates minimum numeric value
+6. **max** - Validates maximum numeric value
 
-### Server Configuration Format
+### Using Validators
 
-The backend API should return validators and validation messages in the form configuration:
-
-```json
-{
-  "fields": [...],
-  "validators": [
-    {
-      "name": "email",
-      "type": "pattern",
-      "config": {
-        "pattern": "^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$"
-      }
-    },
-    {
-      "name": "licenseNumber",
-      "type": "pattern",
-      "config": {
-        "pattern": "^[A-Z0-9]{6,12}$"
-      }
-    }
-  ],
-  "validationMessages": [
-    {
-      "name": "email",
-      "message": "Please enter a valid email address"
-    },
-    {
-      "name": "licenseNumber",
-      "message": "License number must be 6-12 uppercase letters or numbers"
-    }
-  ]
-}
-```
-
-### Adding Validators to Fields
-
-Validators are referenced by name in the JSON configuration:
-
-```json
-{
-  "key": "email",
-  "type": "input",
-  "props": {
-    "label": "Email",
-    "required": true
-  },
-  "validators": {
-    "email": {}
-  }
-}
-```
-
-### Built-in Validators (via props)
-
-Angular's built-in validators work automatically through props:
+Validators are configured directly in field `props`:
 
 ```json
 {
@@ -273,91 +221,80 @@ Angular's built-in validators work automatically through props:
     "label": "First Name",
     "required": true,
     "minLength": 2,
-    "maxLength": 50,
+    "maxLength": 50
+  }
+}
+```
+
+For numeric fields:
+
+```json
+{
+  "key": "age",
+  "type": "input",
+  "props": {
+    "label": "Age",
+    "type": "number",
+    "required": true,
     "min": 0,
     "max": 120
   }
 }
 ```
 
-### Adding New Validators
-
-#### Option 1: Server-Defined Validators (Recommended)
-
-Define validators on the backend using pattern validators or other generic validators:
+For pattern validation:
 
 ```json
 {
-  "validators": [
-    {
-      "name": "email",
-      "type": "pattern",
-      "config": {
-        "pattern": "^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$"
-      }
-    },
-    {
-      "name": "phone",
-      "type": "pattern",
-      "config": {
-        "pattern": "^\\+?[1-9]\\d{1,14}$"
-      }
-    }
-  ],
-  "validationMessages": [
-    {
-      "name": "email",
-      "message": "Please enter a valid email address"
-    },
-    {
-      "name": "phone",
-      "message": "Please enter a valid phone number"
-    }
-  ]
-}
-```
-
-#### Option 2: Frontend Custom Validators
-
-To add a new custom validator on the frontend:
-
-1. **Register in `FormlyConfigService`:**
-```typescript
-// In src/app/services/formly-config.service.ts
-constructor(private formlyConfig: FormlyConfig) {
-  this.registerGenericValidators();
-
-  // Register custom validators
-  this.registerValidator('phone', (control: AbstractControl): ValidationErrors | null => {
-    if (!control.value) return null;
-    const phoneRegex = /^\+?[1-9]\d{1,14}$/;
-    return phoneRegex.test(control.value) ? null : { phone: true };
-  });
-}
-```
-
-2. **Use in server response:**
-```json
-{
-  "validators": [
-    { "name": "phone", "type": "custom" }
-  ],
-  "validationMessages": [
-    { "name": "phone", "message": "Please enter a valid phone number" }
-  ]
-}
-```
-
-4. **Use in field configuration:**
-```json
-{
-  "key": "phone",
+  "key": "email",
   "type": "input",
   "props": {
-    "label": "Phone Number"
-  },
-  "validators": {
-    "phone": {}
+    "label": "Email",
+    "required": true,
+    "pattern": "^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$"
+  }
+}
+```
+
+### Custom Validation Messages
+
+You can customize validation messages via the server response:
+
+```json
+{
+  "fields": [...],
+  "validationMessages": {
+    "required": "Ce champ est requis",
+    "minLength": "Longueur minimale non atteinte",
+    "pattern": "Format invalide"
+  }
+}
+```
+
+**Note:** If no validation messages are provided by the server, the application will use default French messages as a fallback.
+
+### Pattern Validator for Complex Validation
+
+For complex validation logic, use the `pattern` validator with regular expressions:
+
+```json
+{
+  "key": "phoneNumber",
+  "type": "input",
+  "props": {
+    "label": "Phone Number",
+    "required": true,
+    "pattern": "^\\+?[1-9]\\d{1,14}$"
+  }
+}
+```
+
+You can provide custom validation messages for pattern validation:
+
+```json
+{
+  "validationMessages": {
+    "pattern": "Please enter a valid phone number"
   }
 }
 ```
@@ -395,8 +332,7 @@ The `/api/forms/config` endpoint should return:
 ```typescript
 {
   fields: FormlyFieldConfig[];
-  validators?: ValidatorDefinition[];
-  validationMessages?: ValidationMessageDefinition[];
+  validationMessages?: Record<string, string>;  // Map of validator names to error messages
 }
 ```
 
@@ -419,21 +355,15 @@ The `/api/forms/config` endpoint should return:
       "type": "input",
       "props": {
         "label": "Email",
-        "required": true
-      },
-      "validators": {
-        "email": {}
+        "required": true,
+        "pattern": "^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$"
       }
     }
   ],
-  "validators": [
-    { "name": "email", "type": "builtin" },
-    { "name": "name", "type": "builtin" }
-  ],
-  "validationMessages": [
-    { "name": "required", "message": "This field is required" },
-    { "name": "email", "message": "Please enter a valid email address" }
-  ]
+  "validationMessages": {
+    "required": "This field is required",
+    "pattern": "Please enter a valid email address"
+  }
 }
 ```
 

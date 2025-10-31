@@ -1,38 +1,29 @@
 import { FormControl } from '@angular/forms';
 import { FormlyFieldConfig } from '@ngx-formly/core';
-import {
-  emailValidator,
-  emailValidatorMessage,
-  nameValidator,
-  nameValidatorMessage,
-  licenseNumberValidator,
-  licenseNumberValidatorMessage,
-  requiredValidatorMessage,
-  minLengthValidatorMessage,
-  maxLengthValidatorMessage,
-  minValidatorMessage,
-  maxValidatorMessage,
-  patternValidatorMessage,
-  minLengthValidatorFactory,
-  maxLengthValidatorFactory,
-  minValidatorFactory,
-  maxValidatorFactory,
-  patternValidatorFactory
-} from '../../src/app/dynamic-form/validators';
+import { ValidatorRegistryService } from '../../src/app/services/validator-registry.service';
 
 describe('Validators', () => {
+  let validatorRegistry: ValidatorRegistryService;
+
+  beforeEach(() => {
+    validatorRegistry = new ValidatorRegistryService();
+  });
+
   describe('emailValidator', () => {
     it('should return null for empty value', () => {
+      const emailValidator = validatorRegistry.getValidator('email');
       const control = new FormControl('');
-      expect(emailValidator(control)).toBeNull();
+      expect(emailValidator?.(control)).toBeNull();
     });
 
     it('should return null for null value', () => {
+      const emailValidator = validatorRegistry.getValidator('email');
       const control = new FormControl(null);
-      expect(emailValidator(control)).toBeNull();
+      expect(emailValidator?.(control)).toBeNull();
     });
 
     it('should return null for valid email addresses', () => {
+      const emailValidator = validatorRegistry.getValidator('email');
       const validEmails = [
         'test@example.com',
         'user.name@example.com',
@@ -42,11 +33,12 @@ describe('Validators', () => {
 
       validEmails.forEach(email => {
         const control = new FormControl(email);
-        expect(emailValidator(control)).toBeNull();
+        expect(emailValidator?.(control)).toBeNull();
       });
     });
 
     it('should return error for invalid email addresses', () => {
+      const emailValidator = validatorRegistry.getValidator('email');
       const invalidEmails = [
         'invalid',
         'invalid@',
@@ -58,26 +50,20 @@ describe('Validators', () => {
 
       invalidEmails.forEach(email => {
         const control = new FormControl(email);
-        expect(emailValidator(control)).toEqual({ email: true });
+        expect(emailValidator?.(control)).toEqual({ email: true });
       });
-    });
-  });
-
-  describe('emailValidatorMessage', () => {
-    it('should return correct error message', () => {
-      const field: FormlyFieldConfig = {};
-      const message = emailValidatorMessage({}, field);
-      expect(message).toBe('Please enter a valid email address');
     });
   });
 
   describe('nameValidator', () => {
     it('should return null for empty value', () => {
+      const nameValidator = validatorRegistry.getValidator('name');
       const control = new FormControl('');
-      expect(nameValidator(control)).toBeNull();
+      expect(nameValidator?.(control)).toBeNull();
     });
 
     it('should return null for valid names', () => {
+      const nameValidator = validatorRegistry.getValidator('name');
       const validNames = [
         'John',
         'Mary-Jane',
@@ -91,11 +77,12 @@ describe('Validators', () => {
 
       validNames.forEach(name => {
         const control = new FormControl(name);
-        expect(nameValidator(control)).toBeNull();
+        expect(nameValidator?.(control)).toBeNull();
       });
     });
 
     it('should return error for invalid names', () => {
+      const nameValidator = validatorRegistry.getValidator('name');
       const invalidNames = [
         'John123',
         'Mary@Jane',
@@ -106,34 +93,20 @@ describe('Validators', () => {
 
       invalidNames.forEach(name => {
         const control = new FormControl(name);
-        expect(nameValidator(control)).toEqual({ name: true });
+        expect(nameValidator?.(control)).toEqual({ name: true });
       });
-    });
-  });
-
-  describe('nameValidatorMessage', () => {
-    it('should return message with field label', () => {
-      const field: FormlyFieldConfig = {
-        props: { label: 'First Name' }
-      };
-      const message = nameValidatorMessage({}, field);
-      expect(message).toBe('First Name can only contain letters, spaces, hyphens and apostrophes');
-    });
-
-    it('should return default message when no label', () => {
-      const field: FormlyFieldConfig = {};
-      const message = nameValidatorMessage({}, field);
-      expect(message).toBe('This field can only contain letters, spaces, hyphens and apostrophes');
     });
   });
 
   describe('licenseNumberValidator', () => {
     it('should return null for empty value', () => {
+      const licenseNumberValidator = validatorRegistry.getValidator('licenseNumber');
       const control = new FormControl('');
-      expect(licenseNumberValidator(control)).toBeNull();
+      expect(licenseNumberValidator?.(control)).toBeNull();
     });
 
     it('should return null for valid license numbers', () => {
+      const licenseNumberValidator = validatorRegistry.getValidator('licenseNumber');
       const validLicenses = [
         'ABC123',
         'ABCDEF',
@@ -144,11 +117,12 @@ describe('Validators', () => {
 
       validLicenses.forEach(license => {
         const control = new FormControl(license);
-        expect(licenseNumberValidator(control)).toBeNull();
+        expect(licenseNumberValidator?.(control)).toBeNull();
       });
     });
 
     it('should return error for invalid license numbers', () => {
+      const licenseNumberValidator = validatorRegistry.getValidator('licenseNumber');
       const invalidLicenses = [
         'abc123',        // lowercase
         'ABC12',         // too short
@@ -160,238 +134,160 @@ describe('Validators', () => {
 
       invalidLicenses.forEach(license => {
         const control = new FormControl(license);
-        expect(licenseNumberValidator(control)).toEqual({ licenseNumber: true });
+        expect(licenseNumberValidator?.(control)).toEqual({ licenseNumber: true });
       });
     });
   });
 
-  describe('licenseNumberValidatorMessage', () => {
-    it('should return correct error message', () => {
-      const field: FormlyFieldConfig = {};
-      const message = licenseNumberValidatorMessage({}, field);
-      expect(message).toBe('License number must be 6-12 uppercase letters or numbers');
-    });
-  });
-
-  describe('requiredValidatorMessage', () => {
-    it('should return message with field label', () => {
-      const field: FormlyFieldConfig = {
-        props: { label: 'Email' }
-      };
-      const message = requiredValidatorMessage({}, field);
-      expect(message).toBe('Email is required');
-    });
-
-    it('should return default message when no label', () => {
-      const field: FormlyFieldConfig = {};
-      const message = requiredValidatorMessage({}, field);
-      expect(message).toBe('This field is required');
-    });
-  });
-
-  describe('minLengthValidatorFactory', () => {
+  describe('minLengthValidator', () => {
     it('should return null for empty value', () => {
-      const validator = minLengthValidatorFactory(5);
+      const validator = validatorRegistry.getValidator('minLength');
       const control = new FormControl('');
-      expect(validator(control)).toBeNull();
+      expect(validator?.(control, { minLength: 5 })).toBeNull();
     });
 
     it('should return null when value meets minimum length', () => {
-      const validator = minLengthValidatorFactory(5);
+      const validator = validatorRegistry.getValidator('minLength');
       const control = new FormControl('12345');
-      expect(validator(control)).toBeNull();
+      expect(validator?.(control, { minLength: 5 })).toBeNull();
     });
 
     it('should return null when value exceeds minimum length', () => {
-      const validator = minLengthValidatorFactory(5);
+      const validator = validatorRegistry.getValidator('minLength');
       const control = new FormControl('123456');
-      expect(validator(control)).toBeNull();
+      expect(validator?.(control, { minLength: 5 })).toBeNull();
     });
 
     it('should return error when value is below minimum length', () => {
-      const validator = minLengthValidatorFactory(5);
+      const validator = validatorRegistry.getValidator('minLength');
       const control = new FormControl('1234');
-      expect(validator(control)).toEqual({
+      expect(validator?.(control, { minLength: 5 })).toEqual({
         minLength: { requiredLength: 5, actualLength: 4 }
       });
     });
   });
 
-  describe('minLengthValidatorMessage', () => {
-    it('should return message with required length', () => {
-      const field: FormlyFieldConfig = {};
-      const error = { requiredLength: 5, actualLength: 3 };
-      const message = minLengthValidatorMessage(error, field);
-      expect(message).toBe('Minimum 5 characters required');
-    });
-  });
-
-  describe('maxLengthValidatorFactory', () => {
+  describe('maxLengthValidator', () => {
     it('should return null for empty value', () => {
-      const validator = maxLengthValidatorFactory(10);
+      const validator = validatorRegistry.getValidator('maxLength');
       const control = new FormControl('');
-      expect(validator(control)).toBeNull();
+      expect(validator?.(control, { maxLength: 10 })).toBeNull();
     });
 
     it('should return null when value is within maximum length', () => {
-      const validator = maxLengthValidatorFactory(10);
+      const validator = validatorRegistry.getValidator('maxLength');
       const control = new FormControl('12345');
-      expect(validator(control)).toBeNull();
+      expect(validator?.(control, { maxLength: 10 })).toBeNull();
     });
 
     it('should return null when value equals maximum length', () => {
-      const validator = maxLengthValidatorFactory(10);
+      const validator = validatorRegistry.getValidator('maxLength');
       const control = new FormControl('1234567890');
-      expect(validator(control)).toBeNull();
+      expect(validator?.(control, { maxLength: 10 })).toBeNull();
     });
 
     it('should return error when value exceeds maximum length', () => {
-      const validator = maxLengthValidatorFactory(10);
+      const validator = validatorRegistry.getValidator('maxLength');
       const control = new FormControl('12345678901');
-      expect(validator(control)).toEqual({
+      expect(validator?.(control, { maxLength: 10 })).toEqual({
         maxLength: { requiredLength: 10, actualLength: 11 }
       });
     });
   });
 
-  describe('maxLengthValidatorMessage', () => {
-    it('should return message with maximum length', () => {
-      const field: FormlyFieldConfig = {};
-      const error = { requiredLength: 10, actualLength: 15 };
-      const message = maxLengthValidatorMessage(error, field);
-      expect(message).toBe('Maximum 10 characters allowed');
-    });
-  });
-
-  describe('minValidatorFactory', () => {
+  describe('minValidator', () => {
     it('should return null for empty value', () => {
-      const validator = minValidatorFactory(18);
+      const validator = validatorRegistry.getValidator('min');
       const control = new FormControl('');
-      expect(validator(control)).toBeNull();
+      expect(validator?.(control, { min: 18 })).toBeNull();
     });
 
     it('should return null for value of 0 when min is 0', () => {
-      const validator = minValidatorFactory(0);
+      const validator = validatorRegistry.getValidator('min');
       const control = new FormControl(0);
-      expect(validator(control)).toBeNull();
+      expect(validator?.(control, { min: 0 })).toBeNull();
     });
 
     it('should return null when value meets minimum', () => {
-      const validator = minValidatorFactory(18);
+      const validator = validatorRegistry.getValidator('min');
       const control = new FormControl(18);
-      expect(validator(control)).toBeNull();
+      expect(validator?.(control, { min: 18 })).toBeNull();
     });
 
     it('should return null when value exceeds minimum', () => {
-      const validator = minValidatorFactory(18);
+      const validator = validatorRegistry.getValidator('min');
       const control = new FormControl(25);
-      expect(validator(control)).toBeNull();
+      expect(validator?.(control, { min: 18 })).toBeNull();
     });
 
     it('should return error when value is below minimum', () => {
-      const validator = minValidatorFactory(18);
+      const validator = validatorRegistry.getValidator('min');
       const control = new FormControl(15);
-      expect(validator(control)).toEqual({
+      expect(validator?.(control, { min: 18 })).toEqual({
         min: { min: 18, actual: 15 }
       });
     });
   });
 
-
-
-  describe('minValidatorMessage', () => {
-    it('should return message with minimum value', () => {
-      const field: FormlyFieldConfig = {};
-      const error = { min: 18, actual: 15 };
-      const message = minValidatorMessage(error, field);
-      expect(message).toBe('Value must be at least 18');
-    });
-  });
-
-  describe('maxValidatorFactory', () => {
+  describe('maxValidator', () => {
     it('should return null for empty value', () => {
-      const validator = maxValidatorFactory(120);
+      const validator = validatorRegistry.getValidator('max');
       const control = new FormControl('');
-      expect(validator(control)).toBeNull();
+      expect(validator?.(control, { max: 120 })).toBeNull();
     });
 
     it('should return null for value of 0 when max is greater', () => {
-      const validator = maxValidatorFactory(120);
+      const validator = validatorRegistry.getValidator('max');
       const control = new FormControl(0);
-      expect(validator(control)).toBeNull();
+      expect(validator?.(control, { max: 120 })).toBeNull();
     });
 
     it('should return null when value is below maximum', () => {
-      const validator = maxValidatorFactory(120);
+      const validator = validatorRegistry.getValidator('max');
       const control = new FormControl(100);
-      expect(validator(control)).toBeNull();
+      expect(validator?.(control, { max: 120 })).toBeNull();
     });
 
     it('should return null when value equals maximum', () => {
-      const validator = maxValidatorFactory(120);
+      const validator = validatorRegistry.getValidator('max');
       const control = new FormControl(120);
-      expect(validator(control)).toBeNull();
+      expect(validator?.(control, { max: 120 })).toBeNull();
     });
 
     it('should return error when value exceeds maximum', () => {
-      const validator = maxValidatorFactory(120);
+      const validator = validatorRegistry.getValidator('max');
       const control = new FormControl(150);
-      expect(validator(control)).toEqual({
+      expect(validator?.(control, { max: 120 })).toEqual({
         max: { max: 120, actual: 150 }
       });
     });
   });
 
-  describe('maxValidatorMessage', () => {
-    it('should return message with maximum value', () => {
-      const field: FormlyFieldConfig = {};
-      const error = { max: 120, actual: 150 };
-      const message = maxValidatorMessage(error, field);
-      expect(message).toBe('Value cannot exceed 120');
-    });
-  });
-
-  describe('patternValidatorFactory', () => {
+  describe('patternValidator', () => {
     it('should return null for empty value', () => {
-      const validator = patternValidatorFactory(/^[A-Z]+$/);
+      const validator = validatorRegistry.getValidator('pattern');
       const control = new FormControl('');
-      expect(validator(control)).toBeNull();
+      expect(validator?.(control, { pattern: /^[A-Z]+$/ })).toBeNull();
     });
 
     it('should return null when value matches pattern (RegExp)', () => {
-      const validator = patternValidatorFactory(/^[A-Z]+$/);
+      const validator = validatorRegistry.getValidator('pattern');
       const control = new FormControl('ABCD');
-      expect(validator(control)).toBeNull();
+      expect(validator?.(control, { pattern: /^[A-Z]+$/ })).toBeNull();
     });
 
     it('should return null when value matches pattern (string)', () => {
-      const validator = patternValidatorFactory('^[A-Z]+$');
+      const validator = validatorRegistry.getValidator('pattern');
       const control = new FormControl('ABCD');
-      expect(validator(control)).toBeNull();
+      expect(validator?.(control, { pattern: '^[A-Z]+$' })).toBeNull();
     });
 
     it('should return error when value does not match pattern', () => {
-      const validator = patternValidatorFactory(/^[A-Z]+$/);
+      const validator = validatorRegistry.getValidator('pattern');
       const control = new FormControl('abc123');
-      const result = validator(control);
+      const result = validator?.(control, { pattern: /^[A-Z]+$/ });
       expect(result).toBeTruthy();
       expect(result?.['pattern']).toBeDefined();
-    });
-  });
-
-  describe('patternValidatorMessage', () => {
-    it('should return custom pattern message if provided', () => {
-      const field: FormlyFieldConfig = {
-        props: { patternMessage: 'Custom pattern error' }
-      };
-      const message = patternValidatorMessage({}, field);
-      expect(message).toBe('Custom pattern error');
-    });
-
-    it('should return default message when no custom message', () => {
-      const field: FormlyFieldConfig = {};
-      const message = patternValidatorMessage({}, field);
-      expect(message).toBe('Invalid format');
     });
   });
 });

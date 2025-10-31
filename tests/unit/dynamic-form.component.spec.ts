@@ -5,6 +5,7 @@ import { FormlyPrimeNGModule } from '@ngx-formly/primeng';
 import { of, throwError } from 'rxjs';
 import { DynamicFormComponent } from '../../src/app/dynamic-form/dynamic-form.component';
 import { FormApiService } from '../../src/app/services/form-api.service';
+import { FormlyConfigService } from '../../src/app/services/formly-config.service';
 
 describe('DynamicFormComponent', () => {
   let component: DynamicFormComponent;
@@ -60,6 +61,14 @@ describe('DynamicFormComponent', () => {
           }
         }
       }
+    ],
+    validators: [
+      { name: 'email', type: 'builtin' },
+      { name: 'name', type: 'builtin' }
+    ],
+    validationMessages: [
+      { name: 'required', message: 'This field is required' },
+      { name: 'email', message: 'Please enter a valid email address' }
     ]
   };
 
@@ -67,6 +76,12 @@ describe('DynamicFormComponent', () => {
     const mockFormApiService = {
       getFormConfig: jest.fn(),
       submitForm: jest.fn()
+    };
+
+    const mockFormlyConfigService = {
+      registerValidators: jest.fn(),
+      registerValidationMessages: jest.fn(),
+      registerDefaultValidationMessages: jest.fn()
     };
 
     await TestBed.configureTestingModule({
@@ -77,7 +92,8 @@ describe('DynamicFormComponent', () => {
         FormlyPrimeNGModule
       ],
       providers: [
-        { provide: FormApiService, useValue: mockFormApiService }
+        { provide: FormApiService, useValue: mockFormApiService },
+        { provide: FormlyConfigService, useValue: mockFormlyConfigService }
       ]
     }).compileComponents();
 

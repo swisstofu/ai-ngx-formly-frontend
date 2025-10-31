@@ -34,7 +34,7 @@ export interface ValidationMessageDefinition {
   providedIn: 'root'
 })
 export class FormlyConfigService {
-  private validators: Map<string, ValidatorFn> = new Map();
+  private validatorFactories: Map<string, (config?: any) => ValidatorFn> = new Map();
 
   constructor(private formlyConfig: FormlyConfig) {
     this.registerGenericValidators();
@@ -46,63 +46,73 @@ export class FormlyConfigService {
    */
   private registerGenericValidators(): void {
     // Pattern validator - validates against a regex pattern
-    this.validators.set('pattern', (control: AbstractControl, config?: any): ValidationErrors | null => {
-      if (!control.value || !config?.pattern) {
-        return null;
-      }
-      try {
-        const regex = typeof config.pattern === 'string' ? new RegExp(config.pattern) : config.pattern;
-        return regex.test(control.value.toString())
-          ? null
-          : { pattern: { requiredPattern: config.pattern.toString(), actualValue: control.value } };
-      } catch (e) {
-        console.error('Invalid regex pattern:', config.pattern, e);
-        return null;
-      }
+    this.validatorFactories.set('pattern', (config?: any) => {
+      return (control: AbstractControl): ValidationErrors | null => {
+        if (!control.value || !config?.pattern) {
+          return null;
+        }
+        try {
+          const regex = typeof config.pattern === 'string' ? new RegExp(config.pattern) : config.pattern;
+          return regex.test(control.value.toString())
+            ? null
+            : { pattern: { requiredPattern: config.pattern.toString(), actualValue: control.value } };
+        } catch (e) {
+          console.error('Invalid regex pattern:', config.pattern, e);
+          return null;
+        }
+      };
     });
 
     // Min length validator
-    this.validators.set('minLength', (control: AbstractControl, config?: any): ValidationErrors | null => {
-      if (!control.value || !config?.minLength) {
-        return null;
-      }
-      const value = control.value.toString();
-      return value.length >= config.minLength
-        ? null
-        : { minLength: { requiredLength: config.minLength, actualLength: value.length } };
+    this.validatorFactories.set('minLength', (config?: any) => {
+      return (control: AbstractControl): ValidationErrors | null => {
+        if (!control.value || !config?.minLength) {
+          return null;
+        }
+        const value = control.value.toString();
+        return value.length >= config.minLength
+          ? null
+          : { minLength: { requiredLength: config.minLength, actualLength: value.length } };
+      };
     });
 
     // Max length validator
-    this.validators.set('maxLength', (control: AbstractControl, config?: any): ValidationErrors | null => {
-      if (!control.value || !config?.maxLength) {
-        return null;
-      }
-      const value = control.value.toString();
-      return value.length <= config.maxLength
-        ? null
-        : { maxLength: { requiredLength: config.maxLength, actualLength: value.length } };
+    this.validatorFactories.set('maxLength', (config?: any) => {
+      return (control: AbstractControl): ValidationErrors | null => {
+        if (!control.value || !config?.maxLength) {
+          return null;
+        }
+        const value = control.value.toString();
+        return value.length <= config.maxLength
+          ? null
+          : { maxLength: { requiredLength: config.maxLength, actualLength: value.length } };
+      };
     });
 
     // Min value validator
-    this.validators.set('min', (control: AbstractControl, config?: any): ValidationErrors | null => {
-      if (!control.value && control.value !== 0 || !config?.min) {
-        return null;
-      }
-      const numValue = Number(control.value);
-      return !isNaN(numValue) && numValue >= config.min
-        ? null
-        : { min: { min: config.min, actual: numValue } };
+    this.validatorFactories.set('min', (config?: any) => {
+      return (control: AbstractControl): ValidationErrors | null => {
+        if (!control.value && control.value !== 0 || !config?.min) {
+          return null;
+        }
+        const numValue = Number(control.value);
+        return !isNaN(numValue) && numValue >= config.min
+          ? null
+          : { min: { min: config.min, actual: numValue } };
+      };
     });
 
     // Max value validator
-    this.validators.set('max', (control: AbstractControl, config?: any): ValidationErrors | null => {
-      if (!control.value && control.value !== 0 || !config?.max) {
-        return null;
-      }
-      const numValue = Number(control.value);
-      return !isNaN(numValue) && numValue <= config.max
-        ? null
-        : { max: { max: config.max, actual: numValue } };
+    this.validatorFactories.set('max', (config?: any) => {
+      return (control: AbstractControl): ValidationErrors | null => {
+        if (!control.value && control.value !== 0 || !config?.max) {
+          return null;
+        }
+        const numValue = Number(control.value);
+        return !isNaN(numValue) && numValue <= config.max
+          ? null
+          : { max: { max: config.max, actual: numValue } };
+      };
     });
   }
 
@@ -111,14 +121,14 @@ export class FormlyConfigService {
    * Used by the server to register validators that are not generic
    */
   registerValidator(name: string, validator: ValidatorFn): void {
-    this.validators.set(name, validator);
+    this.validatorFactories.set(name, () => validator);
   }
 
   /**
-   * Get a validator by name
+   * Get a validator factory by name
    */
-  getValidator(name: string): ValidatorFn | undefined {
-    return this.validators.get(name);
+  getValidatorFactory(name: string): ((config?: any) => ValidatorFn) | undefined {
+    return this.validatorFactories.get(name);
   }
 
   /**
@@ -126,16 +136,14 @@ export class FormlyConfigService {
    */
   registerValidators(validatorDefinitions: ValidatorDefinition[]): void {
     validatorDefinitions.forEach((definition) => {
-      const validator = this.getValidator(definition.name);
-      if (validator) {
-        // Create a validator function that includes the config
-        const validatorWithConfig = (control: any) => {
-          return validator(control, definition.config);
-        };
+      const validatorFactory = this.getValidatorFactory(definition.name);
+      if (validatorFactory) {
+        // Create a validator function using the factory with config
+        const validator = validatorFactory(definition.config);
 
         this.formlyConfig.setValidator({
           name: definition.name,
-          validation: validatorWithConfig
+          validation: validator
         });
       } else {
         console.warn(`Validator '${definition.name}' not found`);

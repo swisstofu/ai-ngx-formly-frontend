@@ -11,20 +11,8 @@ import { FormlyFieldCheckbox } from '@ngx-formly/primeng/checkbox';
 import { FormlyFieldSelect } from '@ngx-formly/primeng/select';
 
 import { routes } from './app.routes';
-import {
-  emailValidator,
-  emailValidatorMessage,
-  minLengthValidatorMessage,
-  maxLengthValidatorMessage,
-  minValidatorMessage,
-  maxValidatorMessage,
-  patternValidatorMessage,
-  nameValidator,
-  nameValidatorMessage,
-  licenseNumberValidator,
-  licenseNumberValidatorMessage,
-  requiredValidatorMessage
-} from './dynamic-form/validators';
+import { ValidatorRegistryService } from './services/validator-registry.service';
+import { FormlyConfigService } from './services/formly-config.service';
 
 export const appConfig: ApplicationConfig = {
   providers: [
@@ -38,28 +26,14 @@ export const appConfig: ApplicationConfig = {
         preset: Aura
       }
     }),
+    ValidatorRegistryService,
+    FormlyConfigService,
     provideFormlyCore({
       types: [
         { name: 'input', component: FormlyFieldInput },
         { name: 'textarea', component: FormlyFieldTextArea },
         { name: 'checkbox', component: FormlyFieldCheckbox },
         { name: 'select', component: FormlyFieldSelect },
-      ],
-      validators: [
-        { name: 'email', validation: emailValidator },
-        { name: 'name', validation: nameValidator },
-        { name: 'licenseNumber', validation: licenseNumberValidator },
-      ],
-      validationMessages: [
-        { name: 'required', message: requiredValidatorMessage },
-        { name: 'email', message: emailValidatorMessage },
-        { name: 'minLength', message: minLengthValidatorMessage },
-        { name: 'maxLength', message: maxLengthValidatorMessage },
-        { name: 'min', message: minValidatorMessage },
-        { name: 'max', message: maxValidatorMessage },
-        { name: 'pattern', message: patternValidatorMessage },
-        { name: 'name', message: nameValidatorMessage },
-        { name: 'licenseNumber', message: licenseNumberValidatorMessage },
       ],
       extras: {
         showError: (field: any) => {

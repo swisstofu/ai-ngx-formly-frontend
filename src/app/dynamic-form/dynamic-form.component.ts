@@ -10,6 +10,7 @@ import { MessageModule } from 'primeng/message';
 import { ToastModule } from 'primeng/toast';
 import { MessageService } from 'primeng/api';
 import { FormApiService } from '../services/form-api.service';
+import { FormlyConfigService } from '../services/formly-config.service';
 
 @Component({
   selector: 'app-dynamic-form',
@@ -45,13 +46,27 @@ export class DynamicFormComponent implements OnInit {
 
   constructor(
     private formApiService: FormApiService,
-    private messageService: MessageService
+    private messageService: MessageService,
+    private formlyConfigService: FormlyConfigService
   ) {}
 
   ngOnInit() {
     // Load form configuration from backend API
     this.formApiService.getFormConfig().subscribe({
       next: (config) => {
+        // Register validators from server if provided
+        if (config.validators && config.validators.length > 0) {
+          this.formlyConfigService.registerValidators(config.validators);
+        }
+
+        // Register validation messages from server if provided
+        if (config.validationMessages && config.validationMessages.length > 0) {
+          this.formlyConfigService.registerValidationMessages(config.validationMessages);
+        } else {
+          // Register default validation messages if none provided by server
+          this.formlyConfigService.registerDefaultValidationMessages();
+        }
+
         this.fields = this.processFieldsWithJsonLogic(config.fields);
       },
       error: (error) => {

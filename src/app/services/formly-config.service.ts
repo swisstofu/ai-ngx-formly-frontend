@@ -133,7 +133,7 @@ export class FormlyConfigService {
           return validator(control, definition.config);
         };
 
-        this.formlyConfig.addValidator({
+        this.formlyConfig.setValidator({
           name: definition.name,
           validation: validatorWithConfig
         });

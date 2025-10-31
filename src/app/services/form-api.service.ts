@@ -1,15 +1,13 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
-import { ValidatorDefinition, ValidationMessageDefinition } from './validator-registry.service';
 
 /**
  * Response interface for form configuration
  */
 export interface FormConfigResponse {
   fields: any[];
-  validators?: ValidatorDefinition[];
-  validationMessages?: ValidationMessageDefinition[];
+  validationMessages?: Record<string, string>;
 }
 
 /**

@@ -1,71 +1,56 @@
 import { Injectable } from '@angular/core';
-import { FormlyConfig } from '@ngx-formly/core';
-import { ValidatorRegistryService, ValidatorDefinition, ValidationMessageDefinition } from './validator-registry.service';
+import { AbstractControl, ValidationErrors, ValidatorFn } from '@angular/forms';
+import { FormlyConfig, FormlyFieldConfig } from '@ngx-formly/core';
 
 /**
  * Service to configure Formly with dynamic validators
- * Bridges between ValidatorRegistry and Formly configuration
+ * Manages validator registration and validation messages from server
  */
 @Injectable({
   providedIn: 'root'
 })
 export class FormlyConfigService {
-  constructor(
-    private formlyConfig: FormlyConfig,
-    private validatorRegistry: ValidatorRegistryService
-  ) {}
+  constructor(private formlyConfig: FormlyConfig) {}
 
   /**
-   * Register validators with Formly based on server definitions
+   * Normalize regex pattern to fix common issues seen in HTML pattern attribute
+   * - Escapes a trailing hyphen in a character class (e.g., [a-z'-] -> [a-z'\-])
+   *   without disturbing valid ranges like a-z or À-ÿ.
    */
-  registerValidators(validatorDefinitions: ValidatorDefinition[]): void {
-    validatorDefinitions.forEach((definition) => {
-      const validator = this.validatorRegistry.getValidator(definition.name);
-      if (validator) {
-        // Create a validator function that includes the config
-        const validatorWithConfig = (control: any) => {
-          return validator(control, definition.config);
-        };
-
-        this.formlyConfig.addValidator({
-          name: definition.name,
-          validation: validatorWithConfig
-        });
-      } else {
-        console.warn(`Validator '${definition.name}' not found in registry`);
-      }
-    });
+  public normalizeRegexPattern(pattern: string): string {
+    try {
+      // Only escape hyphens that appear just before the closing bracket.
+      // This avoids breaking ranges like a-z or À-ÿ.
+      return pattern.replace(/-\]/g, '\\-]');
+    } catch {
+      return pattern;
+    }
   }
+
+
 
   /**
    * Register validation messages with Formly based on server definitions
+   * @param messages - Object mapping validator names to error messages
    */
-  registerValidationMessages(messageDefinitions: ValidationMessageDefinition[]): void {
-    messageDefinitions.forEach((definition) => {
-      this.formlyConfig.addValidationMessage({
-        name: definition.name,
-        message: () => definition.message
-      });
+  registerValidationMessages(messages: Record<string, string>): void {
+    Object.entries(messages).forEach(([name, message]) => {
+      this.formlyConfig.addValidatorMessage(name, message);
     });
   }
 
   /**
-   * Register default validation messages
+   * Register default validation messages for generic validators (in French)
    */
   registerDefaultValidationMessages(): void {
-    this.validatorRegistry.registerDefaultValidationMessages();
-
-    const defaultMessages = [
-      { name: 'required', message: 'This field is required' },
-      { name: 'email', message: 'Please enter a valid email address' },
-      { name: 'name', message: 'Can only contain letters, spaces, hyphens and apostrophes' },
-      { name: 'licenseNumber', message: 'License number must be 6-12 uppercase letters or numbers' },
-      { name: 'minLength', message: 'Minimum length not met' },
-      { name: 'maxLength', message: 'Maximum length exceeded' },
-      { name: 'min', message: 'Value is too small' },
-      { name: 'max', message: 'Value is too large' },
-      { name: 'pattern', message: 'Invalid format' }
-    ];
+    const defaultMessages: Record<string, string> = {
+      required: 'Ce champ est requis',
+      minLength: 'Longueur minimale non atteinte',
+      maxLength: 'Longueur maximale dépassée',
+      min: 'La valeur est trop petite',
+      max: 'La valeur est trop grande',
+      pattern: 'Format invalide'
+    };
 
     this.registerValidationMessages(defaultMessages);
   }

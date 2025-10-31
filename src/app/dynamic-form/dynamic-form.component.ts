@@ -54,13 +54,8 @@ export class DynamicFormComponent implements OnInit {
     // Load form configuration from backend API
     this.formApiService.getFormConfig().subscribe({
       next: (config) => {
-        // Register validators from server if provided
-        if (config.validators && config.validators.length > 0) {
-          this.formlyConfigService.registerValidators(config.validators);
-        }
-
         // Register validation messages from server if provided
-        if (config.validationMessages && config.validationMessages.length > 0) {
+        if (config.validationMessages && Object.keys(config.validationMessages).length > 0) {
           this.formlyConfigService.registerValidationMessages(config.validationMessages);
         } else {
           // Register default validation messages if none provided by server
@@ -86,6 +81,13 @@ export class DynamicFormComponent implements OnInit {
   ): FormlyFieldConfig[] {
     return fields.map((field) => {
       const processedField: FormlyFieldConfig = { ...field };
+      // Normalize HTML pattern in props if provided by server to avoid invalid charclass (eg, trailing hyphen)
+      if ((processedField as any).props && typeof (processedField as any).props.pattern === 'string') {
+        (processedField as any).props.pattern = this.formlyConfigService.normalizeRegexPattern(
+          (processedField as any).props.pattern
+        );
+      }
+
 
       // Process expressions (visibility, required, disabled)
       if (field.expressions) {

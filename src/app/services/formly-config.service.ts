@@ -148,10 +148,7 @@ export class FormlyConfigService {
    */
   registerValidationMessages(messageDefinitions: ValidationMessageDefinition[]): void {
     messageDefinitions.forEach((definition) => {
-      this.formlyConfig.addValidationMessage({
-        name: definition.name,
-        message: () => definition.message
-      });
+      this.formlyConfig.addValidatorMessage(definition.name, definition.message);
     });
   }
 

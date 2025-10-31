@@ -1,6 +1,5 @@
-import { Injectable } from '@angular/core';
-import { AbstractControl, ValidationErrors, ValidatorFn } from '@angular/forms';
-import { FormlyConfig, FormlyFieldConfig } from '@ngx-formly/core';
+import {Injectable} from '@angular/core';
+import {FormlyConfig} from '@ngx-formly/core';
 
 /**
  * Service to configure Formly with dynamic validators
@@ -10,7 +9,8 @@ import { FormlyConfig, FormlyFieldConfig } from '@ngx-formly/core';
   providedIn: 'root'
 })
 export class FormlyConfigService {
-  constructor(private formlyConfig: FormlyConfig) {}
+  constructor(private formlyConfig: FormlyConfig) {
+  }
 
   /**
    * Normalize regex pattern to fix common issues seen in HTML pattern attribute
@@ -21,12 +21,11 @@ export class FormlyConfigService {
     try {
       // Only escape hyphens that appear just before the closing bracket.
       // This avoids breaking ranges like a-z or À-ÿ.
-      return pattern.replace(/-\]/g, '\\-]');
+      return pattern.replace(/-]/g, '\\-]');
     } catch {
       return pattern;
     }
   }
-
 
 
   /**

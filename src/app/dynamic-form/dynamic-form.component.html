@@ -1,0 +1,47 @@
+<p-toast></p-toast>
+<div class="form-container">
+  <p-card header="Dynamic Form with JSON Logic Rules">
+    <p class="form-description">
+      This form demonstrates ngx-formly with PrimeNG components and JSON Logic rules for:
+    </p>
+    <ul class="features-list">
+      <li><strong>Visibility:</strong> Fields show/hide based on other field values</li>
+      <li><strong>Required validation:</strong> Fields become required dynamically</li>
+      <li><strong>Disabled state:</strong> Fields are disabled based on conditions</li>
+      <li><strong>Validation:</strong> Custom validation rules with error messages</li>
+    </ul>
+
+    @if (formSubmitted && !form.valid) {
+      <p-message severity="error" text="Please fix all validation errors before submitting." styleClass="form-error-message"></p-message>
+    }
+
+    <form [formGroup]="form" (ngSubmit)="onSubmit()">
+      <formly-form [form]="form" [fields]="fields" [model]="model" [options]="options"></formly-form>
+
+      <div class="form-actions">
+        <p-button
+          label="Submit"
+          icon="pi pi-check"
+          type="submit"
+          styleClass="p-button-success"
+          [loading]="isSubmitting"
+          [disabled]="isSubmitting"
+        ></p-button>
+        <p-button
+          label="Reset"
+          icon="pi pi-refresh"
+          type="button"
+          (onClick)="resetForm()"
+          styleClass="p-button-secondary"
+          [disabled]="isSubmitting"
+        ></p-button>
+      </div>
+    </form>
+
+    <div class="model-preview">
+      <h3>Current Form Model (JSON):</h3>
+      <pre>{{ model | json }}</pre>
+    </div>
+  </p-card>
+</div>
+

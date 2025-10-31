@@ -1,0 +1,54 @@
+{
+  "name": "ai-ngx-formly",
+  "version": "0.0.0",
+  "scripts": {
+    "ng": "ng",
+    "start": "ng serve",
+    "build": "ng build",
+    "watch": "ng build --watch --configuration development",
+    "test": "jest",
+    "test:watch": "jest --watch",
+    "test:coverage": "jest --coverage"
+  },
+  "prettier": {
+    "printWidth": 100,
+    "singleQuote": true,
+    "overrides": [
+      {
+        "files": "*.html",
+        "options": {
+          "parser": "angular"
+        }
+      }
+    ]
+  },
+  "private": true,
+  "dependencies": {
+    "@angular/common": "^20.3.0",
+    "@angular/compiler": "^20.3.0",
+    "@angular/core": "^20.3.0",
+    "@angular/forms": "^20.3.0",
+    "@angular/platform-browser": "^20.3.0",
+    "@angular/router": "^20.3.0",
+    "@ngx-formly/core": "^7.0.0",
+    "@ngx-formly/primeng": "^7.0.0",
+    "@primeuix/themes": "^1.2.5",
+    "@types/json-logic-js": "^2.0.8",
+    "json-logic-js": "^2.0.5",
+    "primeicons": "^7.0.0",
+    "primeng": "^20.2.0",
+    "rxjs": "~7.8.0",
+    "tslib": "^2.3.0",
+    "zone.js": "~0.15.0"
+  },
+  "devDependencies": {
+    "@angular-builders/jest": "^20.0.0",
+    "@angular/build": "^20.3.7",
+    "@angular/cli": "^20.3.7",
+    "@angular/compiler-cli": "^20.3.0",
+    "@types/jest": "^30.0.0",
+    "jest": "^30.2.0",
+    "jest-preset-angular": "^15.0.3",
+    "typescript": "~5.9.2"
+  }
+}

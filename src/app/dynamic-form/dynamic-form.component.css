@@ -1,0 +1,147 @@
+.form-container {
+  padding: 2rem;
+}
+
+.form-description {
+  margin-bottom: 1rem;
+  color: #666;
+}
+
+.features-list {
+  margin-bottom: 2rem;
+  padding-left: 1.5rem;
+}
+
+.features-list li {
+  margin-bottom: 0.5rem;
+  color: #555;
+}
+
+.form-actions {
+  display: flex;
+  gap: 1rem;
+  margin-top: 2rem;
+  padding-top: 1rem;
+  border-top: 1px solid #e0e0e0;
+}
+
+.model-preview {
+  margin-top: 2rem;
+  padding: 1rem;
+  background-color: #f5f5f5;
+  border-radius: 4px;
+}
+
+.model-preview h3 {
+  margin-top: 0;
+  margin-bottom: 1rem;
+  color: #333;
+  font-size: 1.1rem;
+}
+
+.model-preview pre {
+  background-color: #2d2d2d;
+  color: #f8f8f2;
+  padding: 1rem;
+  border-radius: 4px;
+  border: 1px solid #444;
+  overflow-x: auto;
+  font-size: 0.9rem;
+  font-family: 'Courier New', Courier, monospace;
+}
+
+:host ::ng-deep .p-card {
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+:host ::ng-deep .p-card .p-card-header {
+  font-size: 1.5rem;
+  font-weight: 600;
+  color: #333;
+}
+
+:host ::ng-deep formly-field {
+  margin-bottom: 1.5rem;
+}
+
+:host ::ng-deep .p-field {
+  margin-bottom: 1.5rem;
+}
+
+/* Validation error styling */
+:host ::ng-deep .p-inputtext.ng-invalid.ng-touched,
+:host ::ng-deep .p-dropdown.ng-invalid.ng-touched,
+:host ::ng-deep .p-inputtextarea.ng-invalid.ng-touched {
+  border-color: #ef4444;
+}
+
+:host ::ng-deep formly-validation-message {
+  display: block;
+  color: #ef4444;
+  font-size: 0.875rem;
+  margin-top: 0.25rem;
+  margin-bottom: 0.5rem;
+}
+
+:host ::ng-deep .form-error-message {
+  margin-bottom: 1.5rem;
+  width: 100%;
+}
+
+:host ::ng-deep .p-message {
+  margin-bottom: 1rem;
+}
+
+/* Fixed width labels for consistent alignment */
+:host ::ng-deep formly-field label {
+  display: inline-block;
+  min-width: 180px;
+  font-weight: 500;
+  margin-bottom: 0.5rem;
+  color: #333;
+}
+
+/* Horizontal layout for form fields */
+:host ::ng-deep .p-field {
+  display: flex;
+  flex-direction: column;
+}
+
+/* For input fields - create horizontal layout */
+:host ::ng-deep formly-field:not([type="checkbox"]) .p-field,
+:host ::ng-deep formly-field:not([type="checkbox"]) > div {
+  display: flex;
+  flex-direction: row;
+  align-items: flex-start;
+  gap: 1rem;
+}
+
+/* Ensure input controls take remaining space */
+:host ::ng-deep formly-field:not([type="checkbox"]) .p-inputtext,
+:host ::ng-deep formly-field:not([type="checkbox"]) .p-dropdown,
+:host ::ng-deep formly-field:not([type="checkbox"]) .p-inputtextarea {
+  flex: 1;
+  max-width: 500px;
+}
+
+/* Wrapper for input and validation messages */
+:host ::ng-deep formly-field:not([type="checkbox"]) .p-field > div:last-child {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Checkbox fields keep vertical layout */
+:host ::ng-deep formly-field[type="checkbox"] .p-field {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+:host ::ng-deep formly-field[type="checkbox"] label {
+  min-width: auto;
+  margin-bottom: 0;
+  order: 2;
+}
+

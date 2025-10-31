@@ -189,12 +189,11 @@ The changes will be picked up automatically when you refresh the browser (the co
 
 ### Architecture
 
-The validation system uses a **fully server-driven architecture** leveraging ngx-formly's built-in validators:
+The validation system uses **globally registered validators** in `app.config.ts` for maximum reusability and maintainability:
 
-1. **ngx-formly Built-in Validators** - Provides validators (pattern, minLength, maxLength, min, max, required) that are configured via field `props`
-2. **FormlyConfigService** (`src/app/services/formly-config.service.ts`) - Manages validation messages
-3. **Backend API** - Defines field configurations with validator settings and custom validation messages
-4. **DynamicFormComponent** - Loads form configuration from server and registers validation messages
+1. **validators.ts** - Contains all validator functions and messages
+2. **app.config.ts** - Registers validators globally via `provideFormlyCore()`
+3. **Backend API** - Returns validators by name in form configuration
 
 **Key Benefit**: All validation is handled by ngx-formly's built-in validators configured via field properties.
 
@@ -278,23 +277,46 @@ You can customize validation messages via the server response:
 For complex validation logic, use the `pattern` validator with regular expressions:
 
 ```json
-{
-  "key": "phoneNumber",
-  "type": "input",
-  "props": {
-    "label": "Phone Number",
-    "required": true,
-    "pattern": "^\\+?[1-9]\\d{1,14}$"
-  }
+"validators": {
+  "licenseNumber": {}
 }
 ```
 
-You can provide custom validation messages for pattern validation:
+### Adding New Validators
 
+To add a new validator:
+
+1. **Create validator function in `validators.ts`:**
+```typescript
+export function phoneValidator(control: AbstractControl): ValidationErrors | null {
+  if (!control.value) return null;
+  const phoneRegex = /^\+?[1-9]\d{1,14}$/;
+  return phoneRegex.test(control.value) ? null : { phone: true };
+}
+
+export function phoneValidatorMessage(error: any, field: FormlyFieldConfig): string {
+  return 'Please enter a valid phone number';
+}
+```
+
+2. **Register in `app.config.ts`:**
+```typescript
+provideFormlyCore({
+  validators: [
+    { name: 'phone', validation: phoneValidator },
+  ],
+  validationMessages: [
+    { name: 'phone', message: phoneValidatorMessage },
+  ],
+})
+```
+
+3. **Use in JSON:**
 ```json
 {
-  "validationMessages": {
-    "pattern": "Please enter a valid phone number"
+  "key": "phone",
+  "validators": {
+    "phone": {}
   }
 }
 ```
@@ -324,48 +346,6 @@ The application uses `FormApiService` to communicate with the backend:
 - **Methods**:
   - `getFormConfig()`: Fetches form configuration from `/api/forms/config`
   - `submitForm(formData)`: Submits form data to `/api/forms/submit`
-
-### Form Configuration Response Format
-
-The `/api/forms/config` endpoint should return:
-
-```typescript
-{
-  fields: FormlyFieldConfig[];
-  validationMessages?: Record<string, string>;  // Map of validator names to error messages
-}
-```
-
-**Example Response:**
-
-```json
-{
-  "fields": [
-    {
-      "key": "firstName",
-      "type": "input",
-      "props": {
-        "label": "First Name",
-        "required": true,
-        "minLength": 2
-      }
-    },
-    {
-      "key": "email",
-      "type": "input",
-      "props": {
-        "label": "Email",
-        "required": true,
-        "pattern": "^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$"
-      }
-    }
-  ],
-  "validationMessages": {
-    "required": "This field is required",
-    "pattern": "Please enter a valid email address"
-  }
-}
-```
 
 The service handles all HTTP communication, making components cleaner and more testable.
 

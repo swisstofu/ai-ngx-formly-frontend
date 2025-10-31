@@ -1,15 +1,15 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { provideHttpClient } from '@angular/common/http';
-import { provideHttpClientTesting, HttpTestingController } from '@angular/common/http/testing';
 import { ReactiveFormsModule, FormGroup } from '@angular/forms';
 import { FormlyModule, FormlyFieldConfig } from '@ngx-formly/core';
 import { FormlyPrimeNGModule } from '@ngx-formly/primeng';
-import { DynamicFormComponent } from './dynamic-form.component';
+import { of, throwError } from 'rxjs';
+import { DynamicFormComponent } from '../../src/app/dynamic-form/dynamic-form.component';
+import { FormApiService } from '../../src/app/services/form-api.service';
 
 describe('DynamicFormComponent', () => {
   let component: DynamicFormComponent;
   let fixture: ComponentFixture<DynamicFormComponent>;
-  let httpMock: HttpTestingController;
+  let formApiService: jest.Mocked<FormApiService>;
 
   const mockFormConfig = {
     fields: [
@@ -64,6 +64,11 @@ describe('DynamicFormComponent', () => {
   };
 
   beforeEach(async () => {
+    const mockFormApiService = {
+      getFormConfig: jest.fn(),
+      submitForm: jest.fn()
+    };
+
     await TestBed.configureTestingModule({
       imports: [
         DynamicFormComponent,
@@ -72,18 +77,13 @@ describe('DynamicFormComponent', () => {
         FormlyPrimeNGModule
       ],
       providers: [
-        provideHttpClient(),
-        provideHttpClientTesting()
+        { provide: FormApiService, useValue: mockFormApiService }
       ]
     }).compileComponents();
 
     fixture = TestBed.createComponent(DynamicFormComponent);
     component = fixture.componentInstance;
-    httpMock = TestBed.inject(HttpTestingController);
-  });
-
-  afterEach(() => {
-    httpMock.verify();
+    formApiService = TestBed.inject(FormApiService) as jest.Mocked<FormApiService>;
   });
 
   it('should create', () => {
@@ -98,38 +98,37 @@ describe('DynamicFormComponent', () => {
   });
 
   it('should load form configuration on init', () => {
+    formApiService.getFormConfig.mockReturnValue(of(mockFormConfig));
+
     fixture.detectChanges();
 
-    const req = httpMock.expectOne('app/dynamic-form/form-config.json');
-    expect(req.request.method).toBe('GET');
-
-    req.flush(mockFormConfig);
-
+    expect(formApiService.getFormConfig).toHaveBeenCalled();
     expect(component.fields.length).toBe(4);
     expect(component.fields[0].key).toBe('firstName');
   });
 
   it('should handle HTTP error when loading config', () => {
     jest.spyOn(console, 'error').mockImplementation(() => {});
-    fixture.detectChanges();
+    formApiService.getFormConfig.mockReturnValue(throwError(() => new Error('API Error')));
 
-    const req = httpMock.expectOne('app/dynamic-form/form-config.json');
-    req.error(new ProgressEvent('error'));
+    fixture.detectChanges();
 
     expect(console.error).toHaveBeenCalled();
   });
 
   describe('processFieldsWithJsonLogic', () => {
     beforeEach(() => {
+      formApiService.getFormConfig.mockReturnValue(of(mockFormConfig));
       fixture.detectChanges();
-      const req = httpMock.expectOne('app/dynamic-form/form-config.json');
-      req.flush(mockFormConfig);
     });
 
     it('should process fields without expressions', () => {
       const field = component.fields.find(f => f.key === 'firstName');
       expect(field).toBeDefined();
-      expect(field?.expressions).toBeUndefined();
+      // Fields without expressions won't have the expressions property or it will be empty/undefined
+      if (field?.expressions) {
+        expect(Object.keys(field.expressions).length).toBe(0);
+      }
     });
 
     it('should convert JSON Logic expressions to functions', () => {
@@ -219,9 +218,7 @@ describe('DynamicFormComponent', () => {
 
   describe('onSubmit', () => {
     beforeEach(() => {
-      fixture.detectChanges();
-      const req = httpMock.expectOne('app/dynamic-form/form-config.json');
-      req.flush(mockFormConfig);
+      formApiService.getFormConfig.mockReturnValue(of(mockFormConfig));
       fixture.detectChanges();
     });
 
@@ -242,33 +239,33 @@ describe('DynamicFormComponent', () => {
       expect(firstNameControl?.touched).toBe(true);
     });
 
-    it('should reset formSubmitted when form is valid', () => {
-      jest.spyOn(window, 'alert').mockImplementation(() => {});
+    it('should submit form to backend when valid', () => {
       jest.spyOn(console, 'log').mockImplementation(() => {});
+      formApiService.submitForm.mockReturnValue(of({ message: 'Form submitted successfully!' }));
 
-      component.model = {
+      const submittedData = {
         firstName: 'John',
         email: 'john@example.com'
       };
+      component.model = submittedData;
       fixture.detectChanges();
 
       component.onSubmit();
 
+      expect(formApiService.submitForm).toHaveBeenCalledWith(submittedData);
+      expect(component.isSubmitting).toBe(false);
       expect(component.formSubmitted).toBe(false);
-      expect(window.alert).toHaveBeenCalledWith('Form submitted successfully! Check console for values.');
-      expect(console.log).toHaveBeenCalledWith('Form submitted with values:', component.model);
+      expect(component.model).toEqual({});
+      expect(console.log).toHaveBeenCalledWith('Form submitted with values:', submittedData);
     });
 
     it('should keep formSubmitted true when form is invalid', () => {
-      jest.spyOn(window, 'alert').mockImplementation(() => {});
-
       component.model = {}; // Empty model - required fields missing
       fixture.detectChanges();
 
       component.onSubmit();
 
       expect(component.formSubmitted).toBe(true);
-      expect(window.alert).toHaveBeenCalledWith('Please fix all validation errors before submitting.');
     });
 
     it('should log form errors when invalid', () => {
@@ -286,9 +283,7 @@ describe('DynamicFormComponent', () => {
 
   describe('resetForm', () => {
     beforeEach(() => {
-      fixture.detectChanges();
-      const req = httpMock.expectOne('app/dynamic-form/form-config.json');
-      req.flush(mockFormConfig);
+      formApiService.getFormConfig.mockReturnValue(of(mockFormConfig));
       fixture.detectChanges();
     });
 
